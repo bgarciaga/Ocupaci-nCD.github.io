@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RANSA · Ocupación CD Villa Nueva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --ransa-green: #009b3a;
+    --ransa-green-dark: #00702a;
+    --ransa-green-deep: #06331b;
+    --ransa-orange: #f29104;
+    --ransa-orange-soft: #ffb64d;
+    --bg: #f4f8f5;
+    --panel: #ffffff;
+    --ink: #10241a;
+    --ink-soft: #55695f;
+    --line: #e1ebe3;
+    --danger: #d64545;
+    --ok: #009b3a;
+    --warn: #f29104;
+    --shadow: 0 1px 2px rgba(6,51,27,0.04), 0 6px 20px rgba(6,51,27,0.06);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter', sans-serif;
+    background:
+      radial-gradient(1100px 500px at 100% -10%, #e4f3e8 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1280px; margin:0 auto; padding:28px 28px 60px;}
+
+  /* ---------- Header ---------- */
+  header.top{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:20px; margin-bottom:26px; flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:16px;}
+  .brand svg{height:34px; width:auto; display:block;}
+  .brand-text h1{
+    font-family:'Poppins',sans-serif; font-weight:700; font-size:20px; margin:0; color:var(--ink);
+    letter-spacing:-0.01em;
+  }
+  .brand-text p{margin:2px 0 0; font-size:13px; color:var(--ink-soft);}
+  .updated-pill{
+    display:flex; align-items:center; gap:8px;
+    background:var(--panel); border:1px solid var(--line); border-radius:100px;
+    padding:8px 16px; font-size:12.5px; color:var(--ink-soft); box-shadow:var(--shadow);
+  }
+  .updated-pill .dot{width:7px; height:7px; border-radius:50%; background:var(--ransa-green); box-shadow:0 0 0 3px rgba(0,155,58,0.15);}
+
+  /* ---------- Upload panel ---------- */
+  .upload-panel{
+    display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    background:linear-gradient(135deg, #06331b 0%, #0a4a26 55%, #0d5c2f 100%);
+    border-radius:18px; padding:18px 24px; margin-bottom:14px; box-shadow:var(--shadow);
+    transition:box-shadow .15s, border-color .15s; border:1.5px dashed transparent;
+  }
+  .upload-panel.dragover{border-color:var(--ransa-orange); box-shadow:0 0 0 4px rgba(242,145,4,0.18);}
+  .upload-left{display:flex; align-items:center; gap:14px; max-width:640px;}
+  .upload-icon{
+    width:38px; height:38px; min-width:38px; border-radius:10px; background:rgba(255,255,255,0.12);
+    display:flex; align-items:center; justify-content:center; font-size:19px; color:#fff;
+  }
+  .upload-left h3{margin:0 0 3px; font-family:'Poppins',sans-serif; font-size:14.5px; font-weight:600; color:#fff;}
+  .upload-left p{margin:0; font-size:12.5px; color:rgba(255,255,255,0.78); line-height:1.45;}
+  .upload-right{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .upload-btn{
+    background:var(--ransa-orange); color:#fff; font-weight:600; font-size:13px;
+    padding:10px 18px; border-radius:10px; cursor:pointer; white-space:nowrap;
+    box-shadow:0 3px 10px rgba(242,145,4,0.35); transition:filter .15s;
+  }
+  .upload-btn:hover{filter:brightness(1.06);}
+  .reset-data-btn{
+    background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.25);
+    font-size:12.5px; font-weight:500; padding:9px 14px; border-radius:10px; cursor:pointer;
+    transition:background .15s;
+  }
+  .reset-data-btn:hover{background:rgba(255,255,255,0.18);}
+  .upload-msg{
+    font-size:12.5px; margin:-2px 0 18px 4px; min-height:16px; font-weight:500;
+  }
+  .upload-msg.ok{color:var(--ransa-green-dark);}
+  .upload-msg.err{color:var(--danger);}
+  .files-summary{
+    display:flex; flex-wrap:wrap; gap:6px; margin:0 0 18px 4px;
+  }
+  .file-pill{
+    font-size:11px; font-weight:500; color:var(--ink-soft); background:#eef4ef;
+    border-radius:100px; padding:3px 10px; white-space:nowrap;
+  }
+  .upload-detail{margin:-2px 0 18px;}
+  .upload-detail-toggle{
+    border:none; background:transparent; color:var(--ink-soft); font-size:12px; font-weight:500;
+    cursor:pointer; padding:2px 4px 2px 0; display:flex; align-items:center; gap:5px;
+  }
+  .upload-detail-toggle:hover{color:var(--ransa-green-dark);}
+  .upload-detail-toggle .chev{display:inline-block; transition:transform .15s; font-size:10px;}
+  .upload-detail-toggle.open .chev{transform:rotate(90deg);}
+  .upload-detail-body{margin-top:8px;}
+  .upload-detail-body[hidden]{display:none;}
+
+  /* ---------- Filters ---------- */
+  .filters{
+    background:var(--panel); border:1px solid var(--line); border-radius:18px;
+    padding:18px 22px; box-shadow:var(--shadow); margin-bottom:22px;
+  }
+  .filters-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .filters-head h2{font-family:'Poppins',sans-serif; font-size:13px; font-weight:600; margin:0; color:var(--ink-soft);}
+  .reset-btn{
+    border:none; background:transparent; color:var(--ransa-green-dark); font-size:12.5px; font-weight:600;
+    cursor:pointer; padding:4px 8px; border-radius:8px; transition:background .15s;
+  }
+  .reset-btn:hover{background:#eaf6ec;}
+  .filter-groups{display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:22px;}
+  .filter-group .label{font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:#8a9a90; margin-bottom:9px; display:block;}
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    border:1.5px solid var(--line); background:#fbfdfb; color:var(--ink);
+    padding:6px 13px; border-radius:100px; font-size:13px; font-weight:500;
+    cursor:pointer; transition:all .15s ease; user-select:none; white-space:nowrap;
+  }
+  .chip:hover{border-color:var(--ransa-green); }
+  .chip.active{
+    background:var(--ransa-green); border-color:var(--ransa-green); color:#fff;
+    box-shadow:0 3px 10px rgba(0,155,58,0.28);
+  }
+  .chip.active.orange{background:var(--ransa-orange); border-color:var(--ransa-orange); box-shadow:0 3px 10px rgba(242,145,4,0.3);}
+  .chip.quick{background:#f2f7f3; font-size:12.5px; padding:5px 12px;}
+  .chip.quick:hover{background:#eaf6ec;}
+
+  .date-inputs{display:flex; align-items:center; gap:8px; margin-bottom:9px;}
+  .date-inputs input[type="date"]{
+    border:1.5px solid var(--line); border-radius:10px; padding:6px 10px; font-size:12.5px;
+    font-family:'Inter',sans-serif; color:var(--ink); background:#fbfdfb; outline:none; flex:1; min-width:0;
+  }
+  .date-inputs input[type="date"]:focus{border-color:var(--ransa-green);}
+  .date-inputs .dash{color:#8a9a90; font-size:12px;}
+  .date-range-hint{font-size:11px; color:#8a9a90; margin:-4px 0 9px;}
+
+  /* ---------- KPIs ---------- */
+  .kpis{display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:22px;}
+  .kpi{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px 20px;
+    box-shadow:var(--shadow); position:relative; overflow:hidden;
+  }
+  .kpi::after{content:""; position:absolute; right:-30px; top:-30px; width:90px; height:90px; border-radius:50%; background:var(--kpi-tint,#eaf6ec); opacity:.6;}
+  .kpi .k-label{font-size:12px; color:var(--ink-soft); font-weight:500; margin-bottom:8px; position:relative;}
+  .kpi .k-value{font-family:'Poppins',sans-serif; font-size:28px; font-weight:700; color:var(--ink); position:relative; line-height:1.1;}
+  .kpi .k-sub{font-size:12px; color:var(--ink-soft); margin-top:6px; position:relative;}
+  .kpi.green .k-value{color:var(--ransa-green-dark);}
+  .kpi.orange .k-value{color:#b06600;}
+  .kpi.orange{--kpi-tint:#fff2e0;}
+  .kpi.danger .k-value{color:var(--danger);}
+  .kpi.danger{--kpi-tint:#fbe9e9;}
+
+  /* ---------- Panels / charts ---------- */
+  .grid-2{display:grid; grid-template-columns: 1.3fr 1fr; gap:16px; margin-bottom:16px;}
+  .grid-3{display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;}
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:20px 22px 12px; box-shadow:var(--shadow);
+  }
+  .panel h3{font-family:'Poppins',sans-serif; font-size:14.5px; font-weight:600; margin:0 0 2px; color:var(--ink);}
+  .panel .sub{font-size:12px; color:var(--ink-soft); margin:0 0 14px;}
+  .chart-box{position:relative; height:230px;}
+  .chart-box.tall{height:280px;}
+
+  /* ---------- Table ---------- */
+  .table-panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden;}
+  .table-panel .panel-h{padding:20px 22px 4px;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.03em;
+    color:#8a9a90; font-weight:600; padding:10px 22px; border-bottom:1px solid var(--line);
+    position:sticky; top:0; background:#fff;
+  }
+  thead th.num, tbody td.num{text-align:right;}
+  tbody td{padding:10px 22px; border-bottom:1px solid #f0f4f1; color:var(--ink);}
+  tbody tr:hover{background:#f8fbf8;}
+  tbody tr:last-child td{border-bottom:none;}
+  .bar-cell{display:flex; align-items:center; gap:8px;}
+  .bar-track{flex:1; height:7px; background:#eef4ef; border-radius:100px; overflow:hidden; min-width:70px;}
+  .bar-fill{height:100%; border-radius:100px; background:var(--ransa-green);}
+  .pct-text{font-variant-numeric:tabular-nums; font-weight:600; width:44px; text-align:right; font-size:12.5px;}
+  .cd-tag{
+    font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; background:#eaf6ec; color:var(--ransa-green-dark);
+  }
+  .scroll-body{max-height:420px; overflow-y:auto;}
+
+  .table-tools{display:flex; align-items:center; justify-content:space-between; padding:0 22px 14px; gap:12px; flex-wrap:wrap;}
+  .search{
+    border:1.5px solid var(--line); border-radius:10px; padding:7px 12px; font-size:13px; width:220px;
+    font-family:'Inter',sans-serif; outline:none;
+  }
+  .search:focus{border-color:var(--ransa-green);}
+  .table-count{font-size:12px; color:var(--ink-soft);}
+
+  footer{text-align:center; font-size:11.5px; color:#a4b2a9; margin-top:26px;}
+
+  @media (max-width: 980px){
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .filter-groups{grid-template-columns:1fr;}
+    .grid-2, .grid-3{grid-template-columns:1fr;}
+  }
+
+  /* ---------- Header actions / Compartir ---------- */
+  .header-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .share-wrap{position:relative;}
+  .share-btn{
+    display:flex; align-items:center; gap:7px;
+    background:var(--panel); border:1px solid var(--line); border-radius:100px;
+    padding:8px 16px; font-size:12.5px; font-weight:600; color:var(--ransa-green-dark);
+    box-shadow:var(--shadow); cursor:pointer; font-family:'Inter',sans-serif;
+    transition:background .15s, border-color .15s;
+  }
+  .share-btn:hover{background:#eaf6ec; border-color:var(--ransa-green);}
+  .share-btn:active{transform:translateY(1px);}
+  .share-toast{
+    position:absolute; top:calc(100% + 8px); right:0; background:var(--ink); color:#fff;
+    font-size:12px; font-weight:500; padding:7px 12px; border-radius:8px; white-space:nowrap;
+    opacity:0; transform:translateY(-4px); pointer-events:none; transition:opacity .15s, transform .15s;
+    box-shadow:var(--shadow); z-index:20;
+  }
+  .share-toast.show{opacity:1; transform:translateY(0);}
+  .share-toast.err{background:var(--danger);}
+
+  /* ---------- Acciones de datos ---------- */
+  .upload-btn, .reset-data-btn{display:inline-flex; align-items:center; gap:6px;}
+  .upload-btn.busy, .reset-data-btn.busy{opacity:.65; pointer-events:none;}
+  .refresh-ic{display:inline-flex; opacity:.9; flex-shrink:0;}
+  .refresh-ic.spin{animation:spin .9s linear infinite;}
+  @keyframes spin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 520 150" xmlns="http://www.w3.org/2000/svg">
+        <g>
+          <path d="M20 20 H70 C95 20 110 35 110 58 C110 78 98 90 82 94 L112 130 H82 L58 96 H48 V130 H20 Z M48 44 V72 H66 C76 72 82 66 82 58 C82 50 76 44 66 44 Z" fill="#009b3a"/>
+          <rect x="4" y="20" width="16" height="110" fill="#f29104"/>
+          <rect x="4" y="20" width="16" height="34" fill="#f29104"/>
+        </g>
+        <text x="135" y="105" font-family="Poppins, sans-serif" font-weight="800" font-size="78" fill="#009b3a">RANSA</text>
+      </svg>
+      <div class="brand-text">
+        <h1>Ocupación de Posiciones · CD Villa Nueva</h1>
+        <p>Dashboard interactivo — Cuadro Resumen &amp; Conteo detallado</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="updated-pill"><span class="dot" id="statusDot"></span> <span id="statusText">Actualizado 03/09/2026</span></div>
+      <div class="share-wrap">
+        <button class="share-btn" id="shareBtn" type="button" title="Compartir este dashboard">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          Compartir
+        </button>
+        <span class="share-toast" id="shareToast"></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="upload-panel" id="uploadPanel">
+    <div class="upload-left">
+      <div class="upload-icon">⭯</div>
+      <div>
+        <h3>Actualizar datos diarios</h3>
+        <p>Presiona <strong>Actualizar</strong> para leer los archivos <strong>POSICIONES_CD...xlsx</strong> (misma estructura, hoja "Conteo") de tu carpeta de OCUPACIONES VILLA NUEVA. La primera vez te pedirá elegir la carpeta (puede ser cualquiera, sin importar su ruta de OneDrive/SharePoint ni su nombre) y queda enlazada de forma fija: ni el botón ni el arrastrar-y-soltar aceptan después una carpeta distinta.</p>
+      </div>
+    </div>
+    <div class="upload-right">
+      <button class="upload-btn" id="updateBtn" type="button" title="Actualizar con los archivos de la carpeta configurada">
+        <svg class="refresh-ic" id="updateBtnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        Actualizar
+      </button>
+      <input type="file" id="fileInput" webkitdirectory directory multiple hidden>
+      <button class="reset-data-btn" id="resetDataBtn" title="Pone todos los valores del dashboard en cero">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+        Restablecer a cero
+      </button>
+    </div>
+  </div>
+  <div class="upload-detail" id="uploadDetail">
+    <button class="upload-detail-toggle" id="uploadDetailToggle" type="button" hidden></button>
+    <div class="upload-detail-body" id="uploadDetailBody" hidden>
+      <div class="upload-msg" id="uploadMsg"></div>
+      <div class="files-summary" id="filesSummary"></div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="filters-head">
+      <h2>FILTROS</h2>
+      <button class="reset-btn" id="resetBtn">Limpiar filtros</button>
+    </div>
+    <div class="filter-groups">
+      <div class="filter-group">
+        <span class="label">Cliente</span>
+        <div class="chip-row" id="clienteChips"></div>
+      </div>
+      <div class="filter-group">
+        <span class="label">Centro de Distribución (CD)</span>
+        <div class="chip-row" id="cdChips"></div>
+      </div>
+      <div class="filter-group">
+        <span class="label">Tipo de posición</span>
+        <div class="chip-row" id="tipoChips"></div>
+      </div>
+      <div class="filter-group">
+        <span class="label">Rango de fechas</span>
+        <div class="date-inputs">
+          <input type="date" id="dateFrom">
+          <span class="dash">–</span>
+          <input type="date" id="dateTo">
+        </div>
+        <div class="date-range-hint" id="dateRangeHint">&nbsp;</div>
+        <div class="chip-row" id="dateQuickChips"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi green">
+      <div class="k-label">Posiciones totales (capacidad)</div>
+      <div class="k-value" id="kpiCapacidad">-</div>
+      <div class="k-sub" id="kpiCapacidadSub">&nbsp;</div>
+    </div>
+    <div class="kpi orange">
+      <div class="k-label">Posiciones ocupadas</div>
+      <div class="k-value" id="kpiOcupado">-</div>
+      <div class="k-sub" id="kpiOcupadoSub">&nbsp;</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Posiciones vacías</div>
+      <div class="k-value" id="kpiVacio">-</div>
+      <div class="k-sub" id="kpiVacioSub">&nbsp;</div>
+    </div>
+    <div class="kpi" id="kpiPctCard">
+      <div class="k-label">% de ocupación</div>
+      <div class="k-value" id="kpiPct">-</div>
+      <div class="k-sub" id="kpiPctSub">&nbsp;</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Ocupación por Centro de Distribución</h3>
+      <p class="sub">Ocupado vs. vacío, por CD (posiciones)</p>
+      <div class="chart-box"><canvas id="chartCD"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>% Ocupación global</h3>
+      <p class="sub">Proporción ocupado / vacío del filtro actual</p>
+      <div class="chart-box"><canvas id="chartDonut"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="panel">
+      <h3>Ocupación por tipo de posición</h3>
+      <p class="sub">% de ocupación por TIPO (Media Pallet / Rack 1.5 / Rack 2.5)</p>
+      <div class="chart-box"><canvas id="chartTipo"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>Top 8 sectores por % ocupación</h3>
+      <p class="sub">Sectores con mayor presión de espacio</p>
+      <div class="chart-box"><canvas id="chartSector"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-panel">
+    <div class="panel-h">
+      <h3>Detalle por Cliente / CD / Tipo</h3>
+      <p class="sub">Resumen agregado según los filtros activos — equivalente a la hoja "Cuadro Resumen"</p>
+    </div>
+    <div class="table-tools">
+      <input type="text" class="search" id="searchBox" placeholder="Buscar cliente, CD, tipo o sector...">
+      <span class="table-count" id="tableCount"></span>
+    </div>
+    <div class="scroll-body">
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>CD</th>
+            <th>Tipo</th>
+            <th>Sector(es)</th>
+            <th class="num">Ocupado</th>
+            <th class="num">Vacío</th>
+            <th class="num">Capacidad</th>
+            <th style="min-width:150px;">% Ocupación</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>RANSA · CD Villa Nueva — Dashboard generado a partir de POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx</footer>
+</div>
+
+<script>
+const RAW_DATA = [{"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 1", "cara": "A", "tipo": "Rack 1.5", "vacio": 4, "ocupado": 98, "capacidad": 102, "ocupacion": 0.9607843137254902, "sector": "LIMPIEZA", "proyeccion": 117.52, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 1", "cara": "A", "tipo": "Media Pallet", "vacio": 6, "ocupado": 46, "capacidad": 52, "ocupacion": 0.8846153846153846, "sector": "LIMPIEZA", "proyeccion": 176.28, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 1", "cara": "B", "tipo": "Rack 1.5", "vacio": 8, "ocupado": 101, "capacidad": 109, "ocupacion": 0.926605504587156, "sector": "LIMPIEZA", "proyeccion": 235.04, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 1", "cara": "B", "tipo": "Media Pallet", "vacio": 13, "ocupado": 47, "capacidad": 60, "ocupacion": 0.7833333333333333, "sector": "LIMPIEZA", "proyeccion": 381.94, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 2", "cara": "A", "tipo": "Rack 1.5", "vacio": 10, "ocupado": 129, "capacidad": 139, "ocupacion": 0.9280575539568345, "sector": "LIMPIEZA", "proyeccion": 293.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 2", "cara": "B", "tipo": "Rack 1.5", "vacio": 9, "ocupado": 136, "capacidad": 145, "ocupacion": 0.9379310344827586, "sector": "LIMPIEZA", "proyeccion": 264.42, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 3", "cara": "A", "tipo": "Rack 1.5", "vacio": 4, "ocupado": 92, "capacidad": 96, "ocupacion": 0.9583333333333334, "sector": "LIMPIEZA", "proyeccion": 117.52, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 3", "cara": "A", "tipo": "Media Pallet", "vacio": 37, "ocupado": 46, "capacidad": 83, "ocupacion": 0.5542168674698795, "sector": "LIMPIEZA", "proyeccion": 1087.06, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 3", "cara": "B", "tipo": "Rack 1.5", "vacio": 10, "ocupado": 101, "capacidad": 111, "ocupacion": 0.9099099099099099, "sector": "LIMPIEZA", "proyeccion": 293.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 3", "cara": "B", "tipo": "Media Pallet", "vacio": 21, "ocupado": 35, "capacidad": 56, "ocupacion": 0.625, "sector": "LIMPIEZA", "proyeccion": 616.98, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 4", "cara": "A", "tipo": "Rack 1.5", "vacio": 31, "ocupado": 92, "capacidad": 123, "ocupacion": 0.7479674796747967, "sector": "LIMPIEZA", "proyeccion": 910.78, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 4", "cara": "A", "tipo": "Media Pallet", "vacio": 21, "ocupado": 23, "capacidad": 44, "ocupacion": 0.5227272727272727, "sector": "LIMPIEZA", "proyeccion": 616.98, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 4", "cara": "B", "tipo": "Rack 1.5", "vacio": 52, "ocupado": 59, "capacidad": 111, "ocupacion": 0.5315315315315315, "sector": "LIMPIEZA", "proyeccion": 1527.76, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 4", "cara": "B", "tipo": "Media Pallet", "vacio": 34, "ocupado": 34, "capacidad": 68, "ocupacion": 0.5, "sector": "LIMPIEZA", "proyeccion": 998.92, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 5", "cara": "A", "tipo": "Rack 1.5", "vacio": 51, "ocupado": 22, "capacidad": 73, "ocupacion": 0.3013698630136986, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 1498.3799999999999, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 5", "cara": "A", "tipo": "Media Pallet", "vacio": 26, "ocupado": 106, "capacidad": 132, "ocupacion": 0.803030303030303, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 763.88, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 5", "cara": "B", "tipo": "Rack 1.5", "vacio": 39, "ocupado": 21, "capacidad": 60, "ocupacion": 0.35, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 1145.82, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 5", "cara": "B", "tipo": "Media Pallet", "vacio": 21, "ocupado": 131, "capacidad": 152, "ocupacion": 0.8618421052631579, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 616.98, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 6", "cara": "A", "tipo": "Rack 1.5", "vacio": 29, "ocupado": 32, "capacidad": 61, "ocupacion": 0.5245901639344263, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 852.02, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 6", "cara": "A", "tipo": "Media Pallet", "vacio": 31, "ocupado": 125, "capacidad": 156, "ocupacion": 0.8012820512820513, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 910.78, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 6", "cara": "B", "tipo": "Rack 1.5", "vacio": 26, "ocupado": 35, "capacidad": 61, "ocupacion": 0.5737704918032787, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 763.88, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 6", "cara": "B", "tipo": "Media Pallet", "vacio": 19, "ocupado": 137, "capacidad": 156, "ocupacion": 0.8782051282051282, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 558.22, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 7", "cara": "A", "tipo": "Rack 1.5", "vacio": 38, "ocupado": 25, "capacidad": 63, "ocupacion": 0.3968253968253968, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 1116.44, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 7", "cara": "A", "tipo": "Media Pallet", "vacio": 44, "ocupado": 108, "capacidad": 152, "ocupacion": 0.7105263157894737, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 1292.72, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 7", "cara": "B", "tipo": "Rack 1.5", "vacio": 28, "ocupado": 111, "capacidad": 139, "ocupacion": 0.7985611510791367, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 822.64, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 8", "cara": "A", "tipo": "Rack 1.5", "vacio": 42, "ocupado": 97, "capacidad": 139, "ocupacion": 0.697841726618705, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 1233.96, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 8", "cara": "B", "tipo": "Rack 1.5", "vacio": 68, "ocupado": 66, "capacidad": 134, "ocupacion": 0.4925373134328358, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 1997.84, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 8", "cara": "B", "tipo": "Media Pallet", "vacio": 2, "ocupado": 2, "capacidad": 4, "ocupacion": 0.5, "sector": "LIMPIEZA Y COSMETICOS", "proyeccion": 58.76, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 9", "cara": "A", "tipo": "Rack 1.5", "vacio": 57, "ocupado": 34, "capacidad": 91, "ocupacion": 0.37362637362637363, "sector": "LIMPIEZA Y UNIDADES", "proyeccion": 1674.6599999999999, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 9", "cara": "A", "tipo": "Media Pallet", "vacio": 16, "ocupado": 80, "capacidad": 96, "ocupacion": 0.8333333333333334, "sector": "LIMPIEZA Y UNIDADES", "proyeccion": 470.08, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 9", "cara": "B", "tipo": "Rack 1.5", "vacio": 52, "ocupado": 32, "capacidad": 84, "ocupacion": 0.38095238095238093, "sector": "LIMPIEZA Y UNIDADES", "proyeccion": 1527.76, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 9", "cara": "B", "tipo": "Media Pallet", "vacio": 24, "ocupado": 80, "capacidad": 104, "ocupacion": 0.7692307692307693, "sector": "LIMPIEZA Y UNIDADES", "proyeccion": 705.12, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 10", "cara": "A", "tipo": "Rack 1.5", "vacio": 60, "ocupado": 79, "capacidad": 139, "ocupacion": 0.5683453237410072, "sector": "LIMPIEZA", "proyeccion": 1762.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 10", "cara": "B", "tipo": "Rack 1.5", "vacio": 59, "ocupado": 81, "capacidad": 140, "ocupacion": 0.5785714285714286, "sector": "LIMPIEZA", "proyeccion": 1733.4199999999998, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 10", "cara": "B", "tipo": "Media Pallet", "vacio": 2, "ocupado": 6, "capacidad": 8, "ocupacion": 0.75, "sector": "LIMPIEZA", "proyeccion": 58.76, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 11", "cara": "A", "tipo": "Rack 1.5", "vacio": 58, "ocupado": 78, "capacidad": 136, "ocupacion": 0.5735294117647058, "sector": "LIMPIEZA", "proyeccion": 1704.04, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 11", "cara": "B", "tipo": "Rack 1.5", "vacio": 68, "ocupado": 71, "capacidad": 139, "ocupacion": 0.5107913669064749, "sector": "LIMPIEZA", "proyeccion": 1997.84, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 12", "cara": "A", "tipo": "Rack 1.5", "vacio": 10, "ocupado": 132, "capacidad": 142, "ocupacion": 0.9295774647887324, "sector": "COMESTIBLE", "proyeccion": 293.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 12", "cara": "B", "tipo": "Rack 1.5", "vacio": 20, "ocupado": 119, "capacidad": 139, "ocupacion": 0.8561151079136691, "sector": "COMESTIBLE", "proyeccion": 587.6, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 13", "cara": "A", "tipo": "Rack 1.5", "vacio": 32, "ocupado": 107, "capacidad": 139, "ocupacion": 0.7697841726618705, "sector": "COMESTIBLE", "proyeccion": 940.16, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 13", "cara": "B", "tipo": "Rack 1.5", "vacio": 41, "ocupado": 98, "capacidad": 139, "ocupacion": 0.7050359712230215, "sector": "COMESTIBLE", "proyeccion": 1204.58, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 14", "cara": "A", "tipo": "Rack 1.5", "vacio": 9, "ocupado": 78, "capacidad": 87, "ocupacion": 0.896551724137931, "sector": "COMESTIBLE", "proyeccion": 264.42, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 14", "cara": "A", "tipo": "Media Pallet", "vacio": 13, "ocupado": 91, "capacidad": 104, "ocupacion": 0.875, "sector": "COMESTIBLE", "proyeccion": 381.94, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 14", "cara": "B", "tipo": "Rack 1.5", "vacio": 27, "ocupado": 66, "capacidad": 93, "ocupacion": 0.7096774193548387, "sector": "COMESTIBLE", "proyeccion": 793.26, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 14", "cara": "B", "tipo": "Media Pallet", "vacio": 23, "ocupado": 121, "capacidad": 144, "ocupacion": 0.8402777777777778, "sector": "COMESTIBLE", "proyeccion": 675.74, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 15", "cara": "A", "tipo": "Rack 1.5", "vacio": 40, "ocupado": 99, "capacidad": 139, "ocupacion": 0.7122302158273381, "sector": "COMESTIBLE", "proyeccion": 1175.2, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 15", "cara": "B", "tipo": "Rack 1.5", "vacio": 35, "ocupado": 104, "capacidad": 139, "ocupacion": 0.7482014388489209, "sector": "COMESTIBLE", "proyeccion": 1028.3, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 16", "cara": "A", "tipo": "Rack 1.5", "vacio": 33, "ocupado": 103, "capacidad": 136, "ocupacion": 0.7573529411764706, "sector": "COMESTIBLE", "proyeccion": 969.54, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 16", "cara": "B", "tipo": "Rack 1.5", "vacio": 56, "ocupado": 84, "capacidad": 140, "ocupacion": 0.6, "sector": "COMESTIBLE", "proyeccion": 1645.28, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 16", "cara": "B", "tipo": "Media Pallet", "vacio": 3, "ocupado": 1, "capacidad": 4, "ocupacion": 0.25, "sector": "COMESTIBLE", "proyeccion": 88.14, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 17", "cara": "A", "tipo": "Rack 1.5", "vacio": 33, "ocupado": 103, "capacidad": 136, "ocupacion": 0.7573529411764706, "sector": "COMESTIBLE", "proyeccion": 969.54, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 17", "cara": "B", "tipo": "Rack 1.5", "vacio": 16, "ocupado": 123, "capacidad": 139, "ocupacion": 0.8848920863309353, "sector": "COMESTIBLE", "proyeccion": 470.08, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 18", "cara": "A", "tipo": "Rack 1.5", "vacio": 11, "ocupado": 26, "capacidad": 37, "ocupacion": 0.7027027027027027, "sector": "COMESTIBLE", "proyeccion": 323.18, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 18", "cara": "A", "tipo": "Media Pallet", "vacio": 77, "ocupado": 127, "capacidad": 204, "ocupacion": 0.6225490196078431, "sector": "COMESTIBLE", "proyeccion": 2262.2599999999998, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 18", "cara": "B", "tipo": "Rack 1.5", "vacio": 21, "ocupado": 30, "capacidad": 51, "ocupacion": 0.5882352941176471, "sector": "COMESTIBLE", "proyeccion": 616.98, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 18", "cara": "B", "tipo": "Media Pallet", "vacio": 145, "ocupado": 55, "capacidad": 200, "ocupacion": 0.275, "sector": "COMESTIBLE", "proyeccion": 4260.099999999999, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 19", "cara": "A", "tipo": "Rack 1.5", "vacio": 6, "ocupado": 107, "capacidad": 113, "ocupacion": 0.9469026548672567, "sector": "BEBES", "proyeccion": 176.28, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 19", "cara": "A", "tipo": "Media Pallet", "vacio": 29, "ocupado": 35, "capacidad": 64, "ocupacion": 0.546875, "sector": "BEBES", "proyeccion": 852.02, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 19", "cara": "B", "tipo": "Rack 1.5", "vacio": 24, "ocupado": 80, "capacidad": 104, "ocupacion": 0.7692307692307693, "sector": "BEBES", "proyeccion": 705.12, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 19", "cara": "B", "tipo": "Media Pallet", "vacio": 41, "ocupado": 23, "capacidad": 64, "ocupacion": 0.359375, "sector": "BEBES", "proyeccion": 1204.58, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 20", "cara": "A", "tipo": "Rack 1.5", "vacio": 22, "ocupado": 90, "capacidad": 112, "ocupacion": 0.8035714285714286, "sector": "BEBES, PAPEL Y GRANOS", "proyeccion": 646.36, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 20", "cara": "A", "tipo": "Media Pallet", "vacio": 14, "ocupado": 26, "capacidad": 40, "ocupacion": 0.65, "sector": "BEBES, PAPEL Y GRANOS", "proyeccion": 411.32, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 20", "cara": "B", "tipo": "Rack 1.5", "vacio": 13, "ocupado": 87, "capacidad": 100, "ocupacion": 0.87, "sector": "BEBES, PAPEL Y GRANOS", "proyeccion": 381.94, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 20", "cara": "B", "tipo": "Media Pallet", "vacio": 14, "ocupado": 30, "capacidad": 44, "ocupacion": 0.6818181818181818, "sector": "BEBES, PAPEL Y GRANOS", "proyeccion": 411.32, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 20", "cara": "B", "tipo": "Rack 2.5", "vacio": 9, "ocupado": 20, "capacidad": 29, "ocupacion": 0.6896551724137931, "sector": "BEBES, PAPEL Y GRANOS", "proyeccion": 264.42, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 21", "cara": "A", "tipo": "Rack 1.5", "vacio": 41, "ocupado": 75, "capacidad": 116, "ocupacion": 0.646551724137931, "sector": "BEBES, PAPEL Y GRANOS", "proyeccion": 1204.58, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 21", "cara": "A", "tipo": "Media Pallet", "vacio": 21, "ocupado": 15, "capacidad": 36, "ocupacion": 0.4166666666666667, "sector": "BEBES, PAPEL Y GRANOS", "proyeccion": 616.98, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 21", "cara": "B", "tipo": "Rack 1.5", "vacio": 46, "ocupado": 41, "capacidad": 87, "ocupacion": 0.47126436781609193, "sector": "BEBES, PAPEL Y GRANOS", "proyeccion": 1351.48, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 21", "cara": "B", "tipo": "Media Pallet", "vacio": 30, "ocupado": 9, "capacidad": 39, "ocupacion": 0.23076923076923078, "sector": "BEBES, PAPEL Y GRANOS", "proyeccion": 881.4, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 21", "cara": "B", "tipo": "Rack 2.5", "vacio": 4, "ocupado": 22, "capacidad": 26, "ocupacion": 0.8461538461538461, "sector": "BEBES, PAPEL Y GRANOS", "proyeccion": 117.52, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 22", "cara": "A", "tipo": "Rack 1.5", "vacio": 60, "ocupado": 91, "capacidad": 151, "ocupacion": 0.6026490066225165, "sector": "GRANOS", "proyeccion": 1762.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 22", "cara": "A", "tipo": "Media Pallet", "vacio": 14, "ocupado": 10, "capacidad": 24, "ocupacion": 0.4166666666666667, "sector": "GRANOS", "proyeccion": 411.32, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 22", "cara": "B", "tipo": "Rack 1.5", "vacio": 70, "ocupado": 70, "capacidad": 140, "ocupacion": 0.5, "sector": "GRANOS", "proyeccion": 2056.6, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 23", "cara": "A", "tipo": "Rack 1.5", "vacio": 22, "ocupado": 108, "capacidad": 130, "ocupacion": 0.8307692307692308, "sector": "LICOR", "proyeccion": 646.36, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 23", "cara": "A", "tipo": "Media Pallet", "vacio": 37, "ocupado": 47, "capacidad": 84, "ocupacion": 0.5595238095238095, "sector": "LICOR", "proyeccion": 1087.06, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 23", "cara": "B", "tipo": "Rack 1.5", "vacio": 25, "ocupado": 90, "capacidad": 115, "ocupacion": 0.782608695652174, "sector": "LICOR", "proyeccion": 734.5, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 23", "cara": "B", "tipo": "Media Pallet", "vacio": 10, "ocupado": 42, "capacidad": 52, "ocupacion": 0.8076923076923077, "sector": "LICOR", "proyeccion": 293.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "GNC", "cd": "CD1", "pasillo": "Pasillo 24", "cara": "A", "tipo": "Rack 1.5", "vacio": 27, "ocupado": 37, "capacidad": 64, "ocupacion": 0.578125, "sector": "GNC", "proyeccion": 793.26, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "GNC", "cd": "CD1", "pasillo": "Pasillo 24", "cara": "A", "tipo": "Media Pallet", "vacio": 19, "ocupado": 114, "capacidad": 133, "ocupacion": 0.8571428571428571, "sector": "GNC", "proyeccion": 558.22, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "GNC", "cd": "CD1", "pasillo": "Pasillo 24", "cara": "B", "tipo": "Rack 1.5", "vacio": 1, "ocupado": 63, "capacidad": 64, "ocupacion": 0.984375, "sector": "GNC", "proyeccion": 29.38, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "GNC", "cd": "CD1", "pasillo": "Pasillo 24", "cara": "B", "tipo": "Media Pallet", "vacio": 28, "ocupado": 122, "capacidad": 150, "ocupacion": 0.8133333333333334, "sector": "GNC", "proyeccion": 822.64, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "GNC", "cd": "CD1", "pasillo": "Pasillo 25", "cara": "A", "tipo": "Rack 1.5", "vacio": 8, "ocupado": 58, "capacidad": 66, "ocupacion": 0.8787878787878788, "sector": "GNC", "proyeccion": 235.04, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "GNC", "cd": "CD1", "pasillo": "Pasillo 25", "cara": "B", "tipo": "Rack 1.5", "vacio": 4, "ocupado": 56, "capacidad": 60, "ocupacion": 0.9333333333333333, "sector": "GNC", "proyeccion": 117.52, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 26", "cara": "A", "tipo": "Rack 1.5", "vacio": 14, "ocupado": 39, "capacidad": 53, "ocupacion": 0.7358490566037735, "sector": "AZUCAR Y PAPEL", "proyeccion": 411.32, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 26", "cara": "A", "tipo": "Rack 2.5", "vacio": 5, "ocupado": 10, "capacidad": 15, "ocupacion": 0.6666666666666666, "sector": "AZUCAR Y PAPEL", "proyeccion": 146.9, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 26", "cara": "B", "tipo": "Rack 1.5", "vacio": 19, "ocupado": 34, "capacidad": 53, "ocupacion": 0.6415094339622641, "sector": "AZUCAR Y PAPEL", "proyeccion": 558.22, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 26", "cara": "B", "tipo": "Rack 2.5", "vacio": 1, "ocupado": 14, "capacidad": 15, "ocupacion": 0.9333333333333333, "sector": "AZUCAR Y PAPEL", "proyeccion": 29.38, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 27", "cara": "A", "tipo": "Rack 1.5", "vacio": 18, "ocupado": 31, "capacidad": 49, "ocupacion": 0.6326530612244898, "sector": "AZUCAR Y PAPEL", "proyeccion": 528.84, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 27", "cara": "A", "tipo": "Rack 2.5", "vacio": 1, "ocupado": 14, "capacidad": 15, "ocupacion": 0.9333333333333333, "sector": "AZUCAR Y PAPEL", "proyeccion": 29.38, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 27", "cara": "B", "tipo": "Rack 1.5", "vacio": 11, "ocupado": 40, "capacidad": 51, "ocupacion": 0.7843137254901961, "sector": "AZUCAR Y PAPEL", "proyeccion": 323.18, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 27", "cara": "B", "tipo": "Rack 2.5", "vacio": 1, "ocupado": 14, "capacidad": 15, "ocupacion": 0.9333333333333333, "sector": "AZUCAR Y PAPEL", "proyeccion": 29.38, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 28", "cara": "B", "tipo": "Rack 1.5", "vacio": 48, "ocupado": 4, "capacidad": 52, "ocupacion": 0.07692307692307693, "sector": "AZUCAR Y PAPEL", "proyeccion": 1410.24, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD1", "pasillo": "Pasillo 28", "cara": "B", "tipo": "Rack 2.5", "vacio": 9, "ocupado": 34, "capacidad": 43, "ocupacion": 0.7906976744186046, "sector": "AZUCAR Y PAPEL", "proyeccion": 264.42, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Averias", "cd": "CD1", "pasillo": "Pasillo 30", "cara": "A", "tipo": "Rack 1.5", "vacio": 0, "ocupado": 66, "capacidad": 66, "ocupacion": 1, "sector": "AVERIAS", "proyeccion": 0, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Averias", "cd": "CD1", "pasillo": "Pasillo 30", "cara": "B", "tipo": "Rack 1.5", "vacio": 0, "ocupado": 63, "capacidad": 63, "ocupacion": 1, "sector": "AVERIAS", "proyeccion": 0, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 1", "cara": "A", "tipo": "Rack 1.5", "vacio": 25, "ocupado": 65, "capacidad": 90, "ocupacion": 0.7222222222222222, "sector": "DESECHALES", "proyeccion": 734.5, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 1", "cara": "A", "tipo": "Rack 2.5", "vacio": 11, "ocupado": 19, "capacidad": 30, "ocupacion": 0.6333333333333333, "sector": "DESECHALES", "proyeccion": 323.18, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 1", "cara": "A", "tipo": "Media Pallet", "vacio": 15, "ocupado": 33, "capacidad": 48, "ocupacion": 0.6875, "sector": "DESECHALES", "proyeccion": 440.7, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 1", "cara": "B", "tipo": "Rack 1.5", "vacio": 27, "ocupado": 56, "capacidad": 83, "ocupacion": 0.6746987951807228, "sector": "DESECHALES", "proyeccion": 793.26, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 1", "cara": "B", "tipo": "Rack 2.5", "vacio": 8, "ocupado": 21, "capacidad": 29, "ocupacion": 0.7241379310344828, "sector": "DESECHALES", "proyeccion": 235.04, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 1", "cara": "B", "tipo": "Media Pallet", "vacio": 13, "ocupado": 25, "capacidad": 38, "ocupacion": 0.6578947368421053, "sector": "DESECHALES", "proyeccion": 381.94, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 2", "cara": "A", "tipo": "Rack 1.5", "vacio": 29, "ocupado": 18, "capacidad": 47, "ocupacion": 0.3829787234042553, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 852.02, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 2", "cara": "A", "tipo": "Media Pallet", "vacio": 85, "ocupado": 83, "capacidad": 168, "ocupacion": 0.49404761904761907, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 2497.2999999999997, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 2", "cara": "A", "tipo": "Rack 2.5", "vacio": 2, "ocupado": 36, "capacidad": 38, "ocupacion": 0.9473684210526315, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 58.76, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 2", "cara": "B", "tipo": "Rack 1.5", "vacio": 7, "ocupado": 133, "capacidad": 140, "ocupacion": 0.95, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 205.66, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 2", "cara": "B", "tipo": "Rack 2.5", "vacio": 0, "ocupado": 38, "capacidad": 38, "ocupacion": 1, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 0, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 3", "cara": "A", "tipo": "Rack 1.5", "vacio": 24, "ocupado": 118, "capacidad": 142, "ocupacion": 0.8309859154929577, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 705.12, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 3", "cara": "A", "tipo": "Rack 2.5", "vacio": 3, "ocupado": 35, "capacidad": 38, "ocupacion": 0.9210526315789473, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 88.14, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 3", "cara": "B", "tipo": "Rack 1.5", "vacio": 41, "ocupado": 101, "capacidad": 142, "ocupacion": 0.7112676056338029, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 1204.58, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 3", "cara": "B", "tipo": "Rack 2.5", "vacio": 6, "ocupado": 32, "capacidad": 38, "ocupacion": 0.8421052631578947, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 176.28, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 4", "cara": "A", "tipo": "Rack 1.5", "vacio": 32, "ocupado": 88, "capacidad": 120, "ocupacion": 0.7333333333333333, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 940.16, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 4", "cara": "A", "tipo": "Rack 2.5", "vacio": 5, "ocupado": 25, "capacidad": 30, "ocupacion": 0.8333333333333334, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 146.9, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 4", "cara": "B", "tipo": "Rack 1.5", "vacio": 20, "ocupado": 70, "capacidad": 90, "ocupacion": 0.7777777777777778, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 587.6, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 4", "cara": "B", "tipo": "Media Pallet", "vacio": 10, "ocupado": 19, "capacidad": 29, "ocupacion": 0.6551724137931034, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 293.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 4", "cara": "B", "tipo": "Rack 2.5", "vacio": 10, "ocupado": 20, "capacidad": 30, "ocupacion": 0.6666666666666666, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 293.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 5", "cara": "A", "tipo": "Rack 1.5", "vacio": 12, "ocupado": 80, "capacidad": 92, "ocupacion": 0.8695652173913043, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 352.56, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 5", "cara": "A", "tipo": "Media Pallet", "vacio": 20, "ocupado": 8, "capacidad": 28, "ocupacion": 0.2857142857142857, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 587.6, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 5", "cara": "A", "tipo": "Rack 2.5", "vacio": 8, "ocupado": 22, "capacidad": 30, "ocupacion": 0.7333333333333333, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 235.04, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 5", "cara": "B", "tipo": "Rack 1.5", "vacio": 11, "ocupado": 81, "capacidad": 92, "ocupacion": 0.8804347826086957, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 323.18, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 5", "cara": "B", "tipo": "Media Pallet", "vacio": 23, "ocupado": 5, "capacidad": 28, "ocupacion": 0.17857142857142858, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 675.74, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 5", "cara": "B", "tipo": "Rack 2.5", "vacio": 14, "ocupado": 16, "capacidad": 30, "ocupacion": 0.5333333333333333, "sector": "COMESTIBLE GRANDE Y DESECHABLE", "proyeccion": 411.32, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 6", "cara": "A", "tipo": "Rack 1.5", "vacio": 10, "ocupado": 161, "capacidad": 171, "ocupacion": 0.9415204678362573, "sector": "LECHES TETRA", "proyeccion": 293.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 6", "cara": "B", "tipo": "Rack 1.5", "vacio": 7, "ocupado": 134, "capacidad": 141, "ocupacion": 0.950354609929078, "sector": "LECHES TETRA", "proyeccion": 205.66, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 6", "cara": "B", "tipo": "Media Pallet", "vacio": 10, "ocupado": 19, "capacidad": 29, "ocupacion": 0.6551724137931034, "sector": "LECHES TETRA", "proyeccion": 293.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 7", "cara": "A", "tipo": "Rack 1.5", "vacio": 11, "ocupado": 115, "capacidad": 126, "ocupacion": 0.9126984126984127, "sector": "GALLETAS", "proyeccion": 323.18, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 7", "cara": "A", "tipo": "Media Pallet", "vacio": 10, "ocupado": 16, "capacidad": 26, "ocupacion": 0.6153846153846154, "sector": "GALLETAS", "proyeccion": 293.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 7", "cara": "B", "tipo": "Rack 1.5", "vacio": 17, "ocupado": 98, "capacidad": 115, "ocupacion": 0.8521739130434782, "sector": "GALLETAS", "proyeccion": 499.46, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 7", "cara": "B", "tipo": "Media Pallet", "vacio": 15, "ocupado": 13, "capacidad": 28, "ocupacion": 0.4642857142857143, "sector": "GALLETAS", "proyeccion": 440.7, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 8", "cara": "A", "tipo": "Rack 1.5", "vacio": 27, "ocupado": 85, "capacidad": 112, "ocupacion": 0.7589285714285714, "sector": "GALLETAS", "proyeccion": 793.26, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 8", "cara": "A", "tipo": "Media Pallet", "vacio": 10, "ocupado": 18, "capacidad": 28, "ocupacion": 0.6428571428571429, "sector": "GALLETAS", "proyeccion": 293.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 8", "cara": "B", "tipo": "Rack 1.5", "vacio": 22, "ocupado": 169, "capacidad": 191, "ocupacion": 0.8848167539267016, "sector": "GALLETAS", "proyeccion": 646.36, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 8", "cara": "B", "tipo": "Media Pallet", "vacio": 9, "ocupado": 23, "capacidad": 32, "ocupacion": 0.71875, "sector": "GALLETAS", "proyeccion": 264.42, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 9", "cara": "A", "tipo": "Rack 1.5", "vacio": 16, "ocupado": 101, "capacidad": 117, "ocupacion": 0.8632478632478633, "sector": "BEBIDAS", "proyeccion": 470.08, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 9", "cara": "A", "tipo": "Media Pallet", "vacio": 9, "ocupado": 19, "capacidad": 28, "ocupacion": 0.6785714285714286, "sector": "BEBIDAS", "proyeccion": 264.42, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 9", "cara": "B", "tipo": "Rack 1.5", "vacio": 13, "ocupado": 97, "capacidad": 110, "ocupacion": 0.8818181818181818, "sector": "BEBIDAS", "proyeccion": 381.94, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 9", "cara": "B", "tipo": "Rack 2.5", "vacio": 19, "ocupado": 10, "capacidad": 29, "ocupacion": 0.3448275862068966, "sector": "BEBIDAS", "proyeccion": 558.22, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 10", "cara": "A", "tipo": "Rack 1.5", "vacio": 31, "ocupado": 76, "capacidad": 107, "ocupacion": 0.7102803738317757, "sector": "BEBIDAS Y FIDELIZACION", "proyeccion": 910.78, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 10", "cara": "A", "tipo": "Rack 2.5", "vacio": 22, "ocupado": 7, "capacidad": 29, "ocupacion": 0.2413793103448276, "sector": "BEBIDAS Y FIDELIZACION", "proyeccion": 646.36, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 10", "cara": "B", "tipo": "Rack 1.5", "vacio": 27, "ocupado": 89, "capacidad": 116, "ocupacion": 0.7672413793103449, "sector": "BEBIDAS Y FIDELIZACION", "proyeccion": 793.26, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 10", "cara": "B", "tipo": "Rack 2.5", "vacio": 28, "ocupado": 1, "capacidad": 29, "ocupacion": 0.034482758620689655, "sector": "BEBIDAS Y FIDELIZACION", "proyeccion": 822.64, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 11", "cara": "A", "tipo": "Rack 1.5", "vacio": 15, "ocupado": 92, "capacidad": 107, "ocupacion": 0.8598130841121495, "sector": "MASCOTAS", "proyeccion": 440.7, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 11", "cara": "A", "tipo": "Rack 2.5", "vacio": 23, "ocupado": 6, "capacidad": 29, "ocupacion": 0.20689655172413793, "sector": "MASCOTAS", "proyeccion": 675.74, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 11", "cara": "B", "tipo": "Rack 1.5", "vacio": 36, "ocupado": 74, "capacidad": 110, "ocupacion": 0.6727272727272727, "sector": "MASCOTAS", "proyeccion": 1057.68, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 11", "cara": "B", "tipo": "Rack 2.5", "vacio": 21, "ocupado": 8, "capacidad": 29, "ocupacion": 0.27586206896551724, "sector": "MASCOTAS", "proyeccion": 616.98, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 12", "cara": "A", "tipo": "Rack 1.5", "vacio": 89, "ocupado": 21, "capacidad": 110, "ocupacion": 0.19090909090909092, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 2614.8199999999997, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 12", "cara": "A", "tipo": "Rack 2.5", "vacio": 24, "ocupado": 6, "capacidad": 30, "ocupacion": 0.2, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 705.12, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 12", "cara": "B", "tipo": "Rack 1.5", "vacio": 121, "ocupado": 0, "capacidad": 121, "ocupacion": 0, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 3554.98, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 12", "cara": "B", "tipo": "Rack 2.5", "vacio": 25, "ocupado": 4, "capacidad": 29, "ocupacion": 0.13793103448275862, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 734.5, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 13", "cara": "A", "tipo": "Rack 1.5", "vacio": 115, "ocupado": 6, "capacidad": 121, "ocupacion": 0.049586776859504134, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 3378.7, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 13", "cara": "A", "tipo": "Media Pallet", "vacio": 72, "ocupado": 124, "capacidad": 196, "ocupacion": 0.6326530612244898, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 2115.36, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 13", "cara": "B", "tipo": "Rack 1.5", "vacio": 165, "ocupado": 3, "capacidad": 168, "ocupacion": 0.017857142857142856, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 4847.7, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 13", "cara": "B", "tipo": "Media Pallet", "vacio": 36, "ocupado": 0, "capacidad": 36, "ocupacion": 0, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 1057.68, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 14", "cara": "A", "tipo": "Rack 1.5", "vacio": 154, "ocupado": 16, "capacidad": 170, "ocupacion": 0.09411764705882353, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 4524.5199999999995, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 14", "cara": "A", "tipo": "Rack 2.5", "vacio": 34, "ocupado": 10, "capacidad": 44, "ocupacion": 0.22727272727272727, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 998.92, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 14", "cara": "B", "tipo": "Rack 1.5", "vacio": 146, "ocupado": 21, "capacidad": 167, "ocupacion": 0.12574850299401197, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 4289.48, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 14", "cara": "B", "tipo": "Rack 2.5", "vacio": 33, "ocupado": 11, "capacidad": 44, "ocupacion": 0.25, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 969.54, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 15", "cara": "A", "tipo": "Rack 1.5", "vacio": 31, "ocupado": 60, "capacidad": 91, "ocupacion": 0.6593406593406593, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 910.78, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 15", "cara": "A", "tipo": "Media Pallet", "vacio": 147, "ocupado": 5, "capacidad": 152, "ocupacion": 0.03289473684210526, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 4318.86, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 15", "cara": "B", "tipo": "Rack 1.5", "vacio": 95, "ocupado": 61, "capacidad": 156, "ocupacion": 0.391025641025641, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 2791.1, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 15", "cara": "B", "tipo": "Media Pallet", "vacio": 37, "ocupado": 5, "capacidad": 42, "ocupacion": 0.11904761904761904, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 1087.06, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 16", "cara": "A", "tipo": "Rack 1.5", "vacio": 0, "ocupado": 176, "capacidad": 176, "ocupacion": 1, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 0, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 16", "cara": "B", "tipo": "Rack 1.5", "vacio": 0, "ocupado": 183, "capacidad": 183, "ocupacion": 1, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 0, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Unisuper", "cd": "CD2", "pasillo": "Pasillo 16", "cara": "B", "tipo": "Media Pallet", "vacio": 0, "ocupado": 38, "capacidad": 38, "ocupacion": 1, "sector": "NAVIDAD. JUGUETES Y FIDEIZACION", "proyeccion": 0, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 1", "cara": "A", "tipo": "Rack 1.5", "vacio": 24, "ocupado": 54, "capacidad": 78, "ocupacion": 0.6923076923076923, "sector": "QUALA", "proyeccion": 705.12, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 1", "cara": "A", "tipo": "Media Pallet", "vacio": 4, "ocupado": 66, "capacidad": 70, "ocupacion": 0.9428571428571428, "sector": "LTX", "proyeccion": 117.52, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 1", "cara": "B", "tipo": "Rack 1.5", "vacio": 4, "ocupado": 136, "capacidad": 140, "ocupacion": 0.9714285714285714, "sector": "LTX", "proyeccion": 117.52, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 1", "cara": "B", "tipo": "Rack 1.5", "vacio": 26, "ocupado": 10, "capacidad": 36, "ocupacion": 0.2777777777777778, "sector": "QUALA", "proyeccion": 763.88, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 2", "cara": "A", "tipo": "Rack 1.5", "vacio": 19, "ocupado": 53, "capacidad": 72, "ocupacion": 0.7361111111111112, "sector": "LTX", "proyeccion": 558.22, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 2", "cara": "A", "tipo": "Media Pallet", "vacio": 34, "ocupado": 102, "capacidad": 136, "ocupacion": 0.75, "sector": "LTX", "proyeccion": 998.92, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 2", "cara": "A", "tipo": "Rack 1.5", "vacio": 36, "ocupado": 0, "capacidad": 36, "ocupacion": 0, "sector": "QUALA", "proyeccion": 1057.68, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 2", "cara": "B", "tipo": "Rack 1.5", "vacio": 9, "ocupado": 63, "capacidad": 72, "ocupacion": 0.875, "sector": "LTX", "proyeccion": 264.42, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 2", "cara": "B", "tipo": "Media Pallet", "vacio": 32, "ocupado": 104, "capacidad": 136, "ocupacion": 0.7647058823529411, "sector": "LTX", "proyeccion": 940.16, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 2", "cara": "B", "tipo": "Rack 1.5", "vacio": 24, "ocupado": 12, "capacidad": 36, "ocupacion": 0.3333333333333333, "sector": "QUALA", "proyeccion": 705.12, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 3", "cara": "A", "tipo": "Rack 1.5", "vacio": 14, "ocupado": 58, "capacidad": 72, "ocupacion": 0.8055555555555556, "sector": "LTX", "proyeccion": 411.32, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 3", "cara": "A", "tipo": "Media Pallet", "vacio": 61, "ocupado": 75, "capacidad": 136, "ocupacion": 0.5514705882352942, "sector": "LTX", "proyeccion": 1792.1799999999998, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 3", "cara": "A", "tipo": "Rack 1.5", "vacio": 32, "ocupado": 4, "capacidad": 36, "ocupacion": 0.1111111111111111, "sector": "LTX", "proyeccion": 940.16, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 3", "cara": "B", "tipo": "Rack 1.5", "vacio": 49, "ocupado": 59, "capacidad": 108, "ocupacion": 0.5462962962962963, "sector": "LTX", "proyeccion": 1439.62, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 3", "cara": "B", "tipo": "Media Pallet", "vacio": 19, "ocupado": 89, "capacidad": 108, "ocupacion": 0.8240740740740741, "sector": "LTX", "proyeccion": 558.22, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 4", "cara": "A", "tipo": "Rack 1.5", "vacio": 65, "ocupado": 115, "capacidad": 180, "ocupacion": 0.6388888888888888, "sector": "LTX", "proyeccion": 1909.7, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 4", "cara": "A", "tipo": "Media Pallet", "vacio": 11, "ocupado": 45, "capacidad": 56, "ocupacion": 0.8035714285714286, "sector": "LTX", "proyeccion": 323.18, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "LTX", "cd": "CD3", "pasillo": "Pasillo 4", "cara": "B", "tipo": "Rack 1.5", "vacio": 144, "ocupado": 0, "capacidad": 144, "ocupacion": 0, "sector": "LTX", "proyeccion": 4230.72, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 5", "cara": "A", "tipo": "Rack 1.5", "vacio": 48, "ocupado": 132, "capacidad": 180, "ocupacion": 0.7333333333333333, "sector": "QUALA", "proyeccion": 1410.24, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 5", "cara": "A", "tipo": "Media Pallet", "vacio": 27, "ocupado": 77, "capacidad": 104, "ocupacion": 0.7403846153846154, "sector": "QUALA", "proyeccion": 793.26, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 5", "cara": "B", "tipo": "Rack 1.5", "vacio": 66, "ocupado": 112, "capacidad": 178, "ocupacion": 0.6292134831460674, "sector": "QUALA", "proyeccion": 1939.08, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 5", "cara": "B", "tipo": "Media Pallet", "vacio": 18, "ocupado": 126, "capacidad": 144, "ocupacion": 0.875, "sector": "QUALA", "proyeccion": 528.84, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 6", "cara": "A", "tipo": "Rack 1.5", "vacio": 4, "ocupado": 176, "capacidad": 180, "ocupacion": 0.9777777777777777, "sector": "QUALA", "proyeccion": 117.52, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 6", "cara": "A", "tipo": "Media Pallet", "vacio": 27, "ocupado": 117, "capacidad": 144, "ocupacion": 0.8125, "sector": "QUALA", "proyeccion": 793.26, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 6", "cara": "B", "tipo": "Rack 1.5", "vacio": 53, "ocupado": 163, "capacidad": 216, "ocupacion": 0.7546296296296297, "sector": "QUALA", "proyeccion": 1557.1399999999999, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 6", "cara": "B", "tipo": "Media Pallet", "vacio": 27, "ocupado": 117, "capacidad": 144, "ocupacion": 0.8125, "sector": "QUALA", "proyeccion": 793.26, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 7", "cara": "A", "tipo": "Rack 1.5", "vacio": 62, "ocupado": 154, "capacidad": 216, "ocupacion": 0.7129629629629629, "sector": "QUALA", "proyeccion": 1821.56, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 7", "cara": "B", "tipo": "Rack 1.5", "vacio": 70, "ocupado": 146, "capacidad": 216, "ocupacion": 0.6759259259259259, "sector": "QUALA", "proyeccion": 2056.6, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 8", "cara": "A", "tipo": "Rack 1.5", "vacio": 20, "ocupado": 196, "capacidad": 216, "ocupacion": 0.9074074074074074, "sector": "RESERVA", "proyeccion": 587.6, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 8", "cara": "B", "tipo": "Rack 1.5", "vacio": 20, "ocupado": 196, "capacidad": 216, "ocupacion": 0.9074074074074074, "sector": "RESERVA", "proyeccion": 587.6, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 9", "cara": "A", "tipo": "Rack 1.5", "vacio": 16, "ocupado": 200, "capacidad": 216, "ocupacion": 0.9259259259259259, "sector": "RESERVA", "proyeccion": 470.08, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 9", "cara": "B", "tipo": "Rack 1.5", "vacio": 44, "ocupado": 166, "capacidad": 210, "ocupacion": 0.7904761904761904, "sector": "RESERVA", "proyeccion": 1292.72, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 10", "cara": "A", "tipo": "Rack 1.5", "vacio": 14, "ocupado": 196, "capacidad": 210, "ocupacion": 0.9333333333333333, "sector": "RESERVA", "proyeccion": 411.32, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 10", "cara": "B", "tipo": "Rack 1.5", "vacio": 31, "ocupado": 185, "capacidad": 216, "ocupacion": 0.8564814814814815, "sector": "RESERVA", "proyeccion": 910.78, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 11", "cara": "A", "tipo": "Rack 1.5", "vacio": 32, "ocupado": 178, "capacidad": 210, "ocupacion": 0.8476190476190476, "sector": "RESERVA", "proyeccion": 940.16, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 11", "cara": "B", "tipo": "Rack 1.5", "vacio": 16, "ocupado": 200, "capacidad": 216, "ocupacion": 0.9259259259259259, "sector": "RESERVA", "proyeccion": 470.08, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 12", "cara": "A", "tipo": "Rack 1.5", "vacio": 17, "ocupado": 175, "capacidad": 192, "ocupacion": 0.9114583333333334, "sector": "RESERVA", "proyeccion": 499.46, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD3", "pasillo": "Pasillo 12", "cara": "B", "tipo": "Rack 1.5", "vacio": 24, "ocupado": 116, "capacidad": 140, "ocupacion": 0.8285714285714286, "sector": "RESERVA", "proyeccion": 705.12, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD4", "pasillo": "Pasillo 1", "cara": "B", "tipo": "Rack 1.5", "vacio": 16, "ocupado": 154, "capacidad": 170, "ocupacion": 0.9058823529411765, "sector": "RESERVA", "proyeccion": 470.08, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD4", "pasillo": "Pasillo 2", "cara": "A", "tipo": "Rack 1.5", "vacio": 124, "ocupado": 76, "capacidad": 200, "ocupacion": 0.38, "sector": "RESERVA", "proyeccion": 3643.12, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD4", "pasillo": "Pasillo 2", "cara": "B", "tipo": "Rack 1.5", "vacio": 160, "ocupado": 40, "capacidad": 200, "ocupacion": 0.2, "sector": "RESERVA", "proyeccion": 4700.8, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD4", "pasillo": "Pasillo 3", "cara": "A", "tipo": "Rack 1.5", "vacio": 102, "ocupado": 98, "capacidad": 200, "ocupacion": 0.49, "sector": "RESERVA", "proyeccion": 2996.7599999999998, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD4", "pasillo": "Pasillo 3", "cara": "B", "tipo": "Rack 1.5", "vacio": 133, "ocupado": 71, "capacidad": 204, "ocupacion": 0.3480392156862745, "sector": "RESERVA", "proyeccion": 3907.54, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD4", "pasillo": "Pasillo 4", "cara": "A", "tipo": "Rack 1.5", "vacio": 61, "ocupado": 139, "capacidad": 200, "ocupacion": 0.695, "sector": "RESERVA", "proyeccion": 1792.1799999999998, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD4", "pasillo": "Pasillo 4", "cara": "B", "tipo": "Rack 1.5", "vacio": 137, "ocupado": 63, "capacidad": 200, "ocupacion": 0.315, "sector": "RESERVA", "proyeccion": 4025.06, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD4", "pasillo": "Pasillo 5", "cara": "A", "tipo": "Rack 1.5", "vacio": 23, "ocupado": 73, "capacidad": 96, "ocupacion": 0.7604166666666666, "sector": "RESERVA", "proyeccion": 675.74, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}, {"cliente": "Importados", "cd": "CD4", "pasillo": "Pasillo 5", "cara": "B", "tipo": "Rack 1.5", "vacio": 26, "ocupado": 78, "capacidad": 104, "ocupacion": 0.75, "sector": "RESERVA", "proyeccion": 763.88, "_fecha": "2026-09-03", "_archivo": "POSICIONES_CD_VILLA_NUEVA_ACTUALIZADO_03_09_2026.xlsx"}];
+</script>
+<script>
+(function(){
+  const GREEN = '#009b3a';
+  const ORANGE = '#f29104';
+
+  const state = { cliente: new Set(), cd: new Set(), tipo: new Set(), search: '', dateFrom: null, dateTo: null };
+  const dataState = { rows: RAW_DATA.slice(), source: 'Datos originales cargados', ts: null };
+
+  let CLIENTES = [], CDS = [], TIPOS = [];
+
+  const clienteChipsEl = document.getElementById('clienteChips');
+  const cdChipsEl = document.getElementById('cdChips');
+  const tipoChipsEl = document.getElementById('tipoChips');
+
+  function buildChips(el, values, set, orange){
+    el.innerHTML = '';
+    values.forEach(v => {
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (set.has(v) ? ' active' + (orange ? ' orange' : '') : '');
+      chip.textContent = v;
+      chip.dataset.value = v;
+      chip.addEventListener('click', () => {
+        if(set.has(v)) set.delete(v); else set.add(v);
+        chip.classList.toggle('active');
+        if(orange) chip.classList.toggle('orange');
+        render();
+      });
+      el.appendChild(chip);
+    });
+  }
+
+  function refreshFilterOptions(){
+    CLIENTES = Array.from(new Set(dataState.rows.map(d => d.cliente))).sort();
+    CDS = Array.from(new Set(dataState.rows.map(d => d.cd))).sort();
+    TIPOS = Array.from(new Set(dataState.rows.map(d => d.tipo))).sort();
+    // drop selections that no longer exist
+    [...state.cliente].forEach(v => { if(!CLIENTES.includes(v)) state.cliente.delete(v); });
+    [...state.cd].forEach(v => { if(!CDS.includes(v)) state.cd.delete(v); });
+    [...state.tipo].forEach(v => { if(!TIPOS.includes(v)) state.tipo.delete(v); });
+    buildChips(clienteChipsEl, CLIENTES, state.cliente, false);
+    buildChips(cdChipsEl, CDS, state.cd, false);
+    buildChips(tipoChipsEl, TIPOS, state.tipo, true);
+    refreshDateFilter();
+  }
+
+  // ---------------- Filtro de fechas ----------------
+
+  const dateFromInput = document.getElementById('dateFrom');
+  const dateToInput = document.getElementById('dateTo');
+  const dateQuickChipsEl = document.getElementById('dateQuickChips');
+  const dateRangeHintEl = document.getElementById('dateRangeHint');
+
+  function isoAddDays(iso, days){
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
+  function isoStartOfMonth(iso){
+    const d = new Date(iso + 'T00:00:00');
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-01';
+  }
+  function fmtDateEs(iso){
+    if(!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('es-GT', { day:'2-digit', month:'2-digit', year:'numeric' });
+  }
+
+  let dateBounds = { min: null, max: null };
+
+  function refreshDateFilter(){
+    const dates = Array.from(new Set(dataState.rows.map(d => d._fecha).filter(Boolean))).sort();
+    dateBounds = { min: dates[0] || null, max: dates[dates.length-1] || null };
+
+    if(dateBounds.min){ dateFromInput.min = dateBounds.min; dateToInput.min = dateBounds.min; }
+    if(dateBounds.max){ dateFromInput.max = dateBounds.max; dateToInput.max = dateBounds.max; }
+
+    // si el filtro actual queda fuera de rango, lo reseteamos
+    if(state.dateFrom && dateBounds.min && state.dateFrom < dateBounds.min) state.dateFrom = null;
+    if(state.dateTo && dateBounds.max && state.dateTo > dateBounds.max) state.dateTo = null;
+    dateFromInput.value = state.dateFrom || '';
+    dateToInput.value = state.dateTo || '';
+
+    if(dateBounds.min && dateBounds.max){
+      dateRangeHintEl.textContent = dates.length > 1
+        ? ('Datos disponibles: ' + fmtDateEs(dateBounds.min) + ' — ' + fmtDateEs(dateBounds.max) + ' (' + dates.length + ' fecha' + (dates.length>1?'s':'') + ')')
+        : ('Datos disponibles: ' + fmtDateEs(dateBounds.min));
+    } else {
+      dateRangeHintEl.textContent = 'Sin información de fecha';
+    }
+
+    buildDateQuickChips();
+  }
+
+  function buildDateQuickChips(){
+    dateQuickChipsEl.innerHTML = '';
+    const presets = [
+      { label: 'Todas las fechas', fn: () => ({ from: null, to: null }) },
+      { label: 'Última fecha', fn: () => ({ from: dateBounds.max, to: dateBounds.max }) },
+      { label: 'Últimos 7 días', fn: () => ({ from: dateBounds.max ? (dateBounds.min && isoAddDays(dateBounds.max, -6) < dateBounds.min ? dateBounds.min : isoAddDays(dateBounds.max, -6)) : null, to: dateBounds.max }) },
+      { label: 'Este mes', fn: () => ({ from: dateBounds.max ? isoStartOfMonth(dateBounds.max) : null, to: dateBounds.max }) }
+    ];
+    presets.forEach(p => {
+      const chip = document.createElement('div');
+      chip.className = 'chip quick';
+      chip.textContent = p.label;
+      chip.addEventListener('click', () => {
+        const { from, to } = p.fn();
+        state.dateFrom = from; state.dateTo = to;
+        dateFromInput.value = from || ''; dateToInput.value = to || '';
+        render();
+      });
+      dateQuickChipsEl.appendChild(chip);
+    });
+  }
+
+  dateFromInput.addEventListener('change', (e) => { state.dateFrom = e.target.value || null; render(); });
+  dateToInput.addEventListener('change', (e) => { state.dateTo = e.target.value || null; render(); });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    state.cliente.clear(); state.cd.clear(); state.tipo.clear();
+    state.search = ''; document.getElementById('searchBox').value = '';
+    state.dateFrom = null; state.dateTo = null;
+    refreshFilterOptions();
+    render();
+  });
+
+  document.getElementById('searchBox').addEventListener('input', (e) => {
+    state.search = e.target.value.trim().toLowerCase();
+    renderTable(getFiltered());
+  });
+
+  function getFiltered(){
+    return dataState.rows.filter(d => {
+      if(state.cliente.size && !state.cliente.has(d.cliente)) return false;
+      if(state.cd.size && !state.cd.has(d.cd)) return false;
+      if(state.tipo.size && !state.tipo.has(d.tipo)) return false;
+      if(state.dateFrom && (!d._fecha || d._fecha < state.dateFrom)) return false;
+      if(state.dateTo && (!d._fecha || d._fecha > state.dateTo)) return false;
+      return true;
+    });
+  }
+
+  function fmtInt(n){ return Math.round(n).toLocaleString('es-GT'); }
+  function fmtPct(n){ return (n*100).toFixed(1) + '%'; }
+
+  let chartCD, chartDonut, chartTipo, chartSector;
+
+  function pctColor(p){
+    if(p >= 0.85) return '#d64545';
+    if(p >= 0.65) return ORANGE;
+    return GREEN;
+  }
+
+  function render(){
+    const rows = getFiltered();
+    renderKPIs(rows);
+    renderChartCD(rows);
+    renderDonut(rows);
+    renderChartTipo(rows);
+    renderChartSector(rows);
+    renderTable(rows);
+    updateStatusPill();
+  }
+
+  function updateStatusPill(){
+    document.getElementById('statusText').textContent = dataState.source +
+      (dataState.ts ? ' — ' + dataState.ts : '');
+  }
+
+  function renderKPIs(rows){
+    const capacidad = rows.reduce((a,d) => a + d.capacidad, 0);
+    const ocupado = rows.reduce((a,d) => a + d.ocupado, 0);
+    const vacio = rows.reduce((a,d) => a + d.vacio, 0);
+    const pct = capacidad ? ocupado / capacidad : 0;
+
+    document.getElementById('kpiCapacidad').textContent = fmtInt(capacidad);
+    document.getElementById('kpiOcupado').textContent = fmtInt(ocupado);
+    document.getElementById('kpiVacio').textContent = fmtInt(vacio);
+    document.getElementById('kpiPct').textContent = fmtPct(pct);
+
+    document.getElementById('kpiCapacidadSub').textContent = rows.length + ' registros filtrados';
+    document.getElementById('kpiOcupadoSub').textContent = fmtPct(ocupado/(capacidad||1)) + ' del total';
+    document.getElementById('kpiVacioSub').textContent = fmtPct(vacio/(capacidad||1)) + ' disponible';
+
+    const card = document.getElementById('kpiPctCard');
+    card.className = 'kpi';
+    let subText = 'Ocupación saludable';
+    if(pct >= 0.85){ card.classList.add('danger'); subText = 'Ocupación crítica'; }
+    else if(pct >= 0.65){ card.classList.add('orange'); subText = 'Ocupación moderada-alta'; }
+    else { card.classList.add('green'); }
+    document.getElementById('kpiPctSub').textContent = subText;
+  }
+
+  function groupBy(rows, key){
+    const map = new Map();
+    rows.forEach(d => {
+      if(!map.has(d[key])) map.set(d[key], {ocupado:0, vacio:0, capacidad:0});
+      const g = map.get(d[key]);
+      g.ocupado += d.ocupado; g.vacio += d.vacio; g.capacidad += d.capacidad;
+    });
+    return map;
+  }
+
+  function renderChartCD(rows){
+    const map = groupBy(rows, 'cd');
+    const labels = CDS.filter(c => map.has(c));
+    const ocupadoData = labels.map(l => map.get(l).ocupado);
+    const vacioData = labels.map(l => map.get(l).vacio);
+
+    if(chartCD) chartCD.destroy();
+    chartCD = new Chart(document.getElementById('chartCD'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Ocupado', data: ocupadoData, backgroundColor: GREEN, borderRadius: 6, maxBarThickness: 46 },
+          { label: 'Vacío', data: vacioData, backgroundColor: '#dcece0', borderRadius: 6, maxBarThickness: 46 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 12 } } } },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, grid: { color: '#f0f4f1' }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  function renderDonut(rows){
+    const ocupado = rows.reduce((a,d) => a + d.ocupado, 0);
+    const vacio = rows.reduce((a,d) => a + d.vacio, 0);
+    if(chartDonut) chartDonut.destroy();
+    chartDonut = new Chart(document.getElementById('chartDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Ocupado', 'Vacío'],
+        datasets: [{ data: [ocupado, vacio], backgroundColor: [GREEN, '#eef4ef'], borderWidth: 0, hoverOffset: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '72%',
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 12 } } },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${fmtInt(ctx.raw)} posiciones` } }
+        }
+      },
+      plugins: [{
+        id: 'centerText',
+        afterDraw(chart){
+          const {ctx, chartArea:{width, height, left, top}} = chart;
+          const total = ocupado + vacio;
+          const pct = total ? (ocupado/total*100).toFixed(1) : '0.0';
+          ctx.save();
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.font = '700 24px Poppins, sans-serif'; ctx.fillStyle = '#10241a';
+          ctx.fillText(pct + '%', left + width/2, top + height/2 - 6);
+          ctx.font = '500 11px Inter, sans-serif'; ctx.fillStyle = '#8a9a90';
+          ctx.fillText('ocupado', left + width/2, top + height/2 + 14);
+          ctx.restore();
+        }
+      }]
+    });
+  }
+
+  function renderChartTipo(rows){
+    const map = groupBy(rows, 'tipo');
+    const labels = TIPOS.filter(t => map.has(t));
+    const pctData = labels.map(l => {
+      const g = map.get(l);
+      return g.capacidad ? +(g.ocupado/g.capacidad*100).toFixed(1) : 0;
+    });
+    const colors = pctData.map(p => pctColor(p/100));
+
+    if(chartTipo) chartTipo.destroy();
+    chartTipo = new Chart(document.getElementById('chartTipo'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: pctData, backgroundColor: colors, borderRadius: 8, maxBarThickness: 54 }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.raw}% ocupado` } }
+        },
+        scales: {
+          x: { max: 100, grid: { color: '#f0f4f1' }, ticks: { callback: v => v + '%', font: {size: 11} } },
+          y: { grid: { display: false }, ticks: { font: { size: 12 } } }
+        }
+      }
+    });
+  }
+
+  function renderChartSector(rows){
+    const map = new Map();
+    rows.forEach(d => {
+      if(!map.has(d.sector)) map.set(d.sector, {ocupado:0, capacidad:0});
+      const g = map.get(d.sector);
+      g.ocupado += d.ocupado; g.capacidad += d.capacidad;
+    });
+    let entries = Array.from(map.entries())
+      .map(([sector, g]) => ({ sector, pct: g.capacidad ? g.ocupado/g.capacidad : 0 }))
+      .filter(e => e.sector)
+      .sort((a,b) => b.pct - a.pct)
+      .slice(0, 8);
+
+    const labels = entries.map(e => e.sector.length > 22 ? e.sector.slice(0,20)+'…' : e.sector);
+    const data = entries.map(e => +(e.pct*100).toFixed(1));
+    const colors = entries.map(e => pctColor(e.pct));
+
+    if(chartSector) chartSector.destroy();
+    chartSector = new Chart(document.getElementById('chartSector'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: 8, maxBarThickness: 22 }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw}% ocupado` } } },
+        scales: {
+          x: { max: 100, grid: { color: '#f0f4f1' }, ticks: { callback: v => v + '%', font: {size: 11} } },
+          y: { grid: { display: false }, ticks: { font: { size: 11.5 } } }
+        }
+      }
+    });
+  }
+
+  function renderTable(rows){
+    const map = new Map();
+    rows.forEach(d => {
+      const key = d.cliente + '||' + d.cd + '||' + d.tipo;
+      if(!map.has(key)) map.set(key, { cliente: d.cliente, cd: d.cd, tipo: d.tipo, ocupado:0, vacio:0, capacidad:0, sectores: new Set() });
+      const g = map.get(key);
+      g.ocupado += d.ocupado; g.vacio += d.vacio; g.capacidad += d.capacidad;
+      if(d.sector) g.sectores.add(d.sector);
+    });
+
+    let entries = Array.from(map.values()).map(g => ({
+      ...g, pct: g.capacidad ? g.ocupado/g.capacidad : 0,
+      sectoresText: Array.from(g.sectores).join(', ')
+    }));
+
+    if(state.search){
+      entries = entries.filter(e =>
+        e.cliente.toLowerCase().includes(state.search) ||
+        e.cd.toLowerCase().includes(state.search) ||
+        e.tipo.toLowerCase().includes(state.search) ||
+        e.sectoresText.toLowerCase().includes(state.search)
+      );
+    }
+
+    entries.sort((a,b) => b.pct - a.pct);
+
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    entries.forEach(e => {
+      const tr = document.createElement('tr');
+      const color = pctColor(e.pct);
+      tr.innerHTML = `
+        <td>${e.cliente}</td>
+        <td><span class="cd-tag">${e.cd}</span></td>
+        <td>${e.tipo}</td>
+        <td style="color:#55695f; font-size:12.5px; max-width:260px;">${e.sectoresText || '—'}</td>
+        <td class="num">${fmtInt(e.ocupado)}</td>
+        <td class="num">${fmtInt(e.vacio)}</td>
+        <td class="num">${fmtInt(e.capacidad)}</td>
+        <td>
+          <div class="bar-cell">
+            <div class="bar-track"><div class="bar-fill" style="width:${(e.pct*100).toFixed(1)}%; background:${color};"></div></div>
+            <span class="pct-text" style="color:${color};">${fmtPct(e.pct)}</span>
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('tableCount').textContent = entries.length + ' combinaciones mostradas';
+  }
+
+  // ---------------- Carga de nuevo archivo Excel (mismo formato) ----------------
+
+  function normHeader(s){
+    return String(s || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase().trim();
+  }
+
+  function parseWorkbookRows(workbook){
+    const sheetName = workbook.SheetNames.find(n => normHeader(n).includes('CONTEO')) || workbook.SheetNames[0];
+    const ws = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+
+    // localizar la fila de encabezados (contiene 'CLIENTE' y 'TIPO')
+    let headerIdx = -1;
+    for(let i = 0; i < rows.length; i++){
+      const normRow = rows[i].map(normHeader);
+      if(normRow.includes('CLIENTE') && normRow.includes('TIPO')){
+        headerIdx = i; break;
+      }
+    }
+    if(headerIdx === -1) throw new Error('No se encontró la fila de encabezados (Cliente, CD, TIPO...) en la hoja "' + sheetName + '".');
+
+    const header = rows[headerIdx].map(normHeader);
+    const col = (name) => header.findIndex(h => h === name);
+    const colContains = (part) => header.findIndex(h => h.includes(part));
+
+    const idx = {
+      cliente: col('CLIENTE'),
+      cd: col('CD'),
+      pasillo: colContains('PASILLO'),
+      cara: col('CARA'),
+      tipo: col('TIPO'),
+      vacio: col('VACIO'),
+      ocupado: col('OCUPADO'),
+      capacidad: colContains('CAPACIDAD'),
+      ocupacion: colContains('OCUPACION'),
+      sector: colContains('SECTOR'),
+      proyeccion: colContains('PROYECCION')
+    };
+    if(idx.cliente === -1 || idx.tipo === -1) throw new Error('No se pudieron identificar las columnas Cliente/Tipo esperadas.');
+
+    const out = [];
+    for(let i = headerIdx + 1; i < rows.length; i++){
+      const r = rows[i];
+      if(!r || r[idx.cliente] === null || r[idx.cliente] === undefined || String(r[idx.cliente]).trim() === '') continue;
+      const vacio = Number(r[idx.vacio]) || 0;
+      const ocupado = Number(r[idx.ocupado]) || 0;
+      let capacidad = idx.capacidad > -1 ? Number(r[idx.capacidad]) : (vacio + ocupado);
+      if(!capacidad) capacidad = vacio + ocupado;
+      let ocupacion = idx.ocupacion > -1 ? Number(r[idx.ocupacion]) : (capacidad ? ocupado/capacidad : 0);
+      if(ocupacion > 1) ocupacion = ocupacion / 100; // por si viene como 96.07 en vez de 0.9607
+      out.push({
+        cliente: String(r[idx.cliente]).trim(),
+        cd: idx.cd > -1 ? String(r[idx.cd] || '').trim() : '',
+        pasillo: idx.pasillo > -1 ? String(r[idx.pasillo] || '').trim() : '',
+        cara: idx.cara > -1 ? String(r[idx.cara] || '').trim() : '',
+        tipo: String(r[idx.tipo] || '').trim(),
+        vacio, ocupado, capacidad, ocupacion,
+        sector: idx.sector > -1 ? String(r[idx.sector] || '').trim() : '',
+        proyeccion: idx.proyeccion > -1 ? Number(r[idx.proyeccion]) || 0 : 0
+      });
+    }
+    if(!out.length) throw new Error('La hoja "' + sheetName + '" no contiene filas de datos reconocibles.');
+    return out;
+  }
+
+  const uploadDetailToggle = document.getElementById('uploadDetailToggle');
+  const uploadDetailBody = document.getElementById('uploadDetailBody');
+
+  uploadDetailToggle.addEventListener('click', () => {
+    const isHidden = uploadDetailBody.hasAttribute('hidden');
+    if(isHidden){ uploadDetailBody.removeAttribute('hidden'); uploadDetailToggle.classList.add('open'); }
+    else { uploadDetailBody.setAttribute('hidden',''); uploadDetailToggle.classList.remove('open'); }
+  });
+
+  function setUploadToggleLabel(text){
+    if(text){
+      uploadDetailToggle.innerHTML = '<span class="chev">▸</span> ' + text;
+      uploadDetailToggle.removeAttribute('hidden');
+    } else {
+      uploadDetailToggle.setAttribute('hidden','');
+      uploadDetailBody.setAttribute('hidden','');
+      uploadDetailToggle.classList.remove('open');
+    }
+  }
+
+  function showUploadMsg(text, ok){
+    const el = document.getElementById('uploadMsg');
+    el.textContent = text;
+    el.className = 'upload-msg ' + (ok ? 'ok' : 'err');
+    if(!ok){
+      // los errores se muestran de inmediato, sin esperar a que el usuario expanda el detalle
+      uploadDetailToggle.removeAttribute('hidden');
+      uploadDetailBody.removeAttribute('hidden');
+      uploadDetailToggle.classList.add('open');
+      if(!uploadDetailToggle.textContent.trim()) uploadDetailToggle.innerHTML = '<span class="chev">▸</span> Detalle de la carga';
+    }
+  }
+
+  function renderFilesSummary(fileNames){
+    const el = document.getElementById('filesSummary');
+    el.innerHTML = '';
+    (fileNames || []).forEach(name => {
+      const pill = document.createElement('span');
+      pill.className = 'file-pill';
+      pill.textContent = name;
+      el.appendChild(pill);
+    });
+    setUploadToggleLabel(fileNames && fileNames.length ? ('Ver detalle de carga (' + fileNames.length + ' archivo' + (fileNames.length>1?'s':'') + ')') : null);
+  }
+
+  function isValidExcelFile(file){
+    return /\.(xlsx|xls)$/i.test(file.name) && !file.name.startsWith('~$') && !file.name.startsWith('.');
+  }
+
+  function extractDateFromFilename(name){
+    const base = name.replace(/\.(xlsx|xls)$/i, '');
+    // DD_MM_YYYY, DD-MM-YYYY o DD.MM.YYYY (prioriza la última coincidencia del nombre)
+    let matches = [...base.matchAll(/(\d{1,2})[_\-.](\d{1,2})[_\-.](\d{4})/g)];
+    if(matches.length){
+      const [, d, mo, y] = matches[matches.length - 1];
+      const day = parseInt(d,10), month = parseInt(mo,10), year = parseInt(y,10);
+      if(day >= 1 && day <= 31 && month >= 1 && month <= 12){
+        return year + '-' + String(month).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      }
+    }
+    // YYYY_MM_DD, YYYY-MM-DD o YYYY.MM.DD
+    matches = [...base.matchAll(/(\d{4})[_\-.](\d{1,2})[_\-.](\d{1,2})/g)];
+    if(matches.length){
+      const [, y, mo, d] = matches[matches.length - 1];
+      const day = parseInt(d,10), month = parseInt(mo,10), year = parseInt(y,10);
+      if(day >= 1 && day <= 31 && month >= 1 && month <= 12){
+        return year + '-' + String(month).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      }
+    }
+    return null;
+  }
+
+  function fallbackDateFromFile(file){
+    if(!file.lastModified) return null;
+    const d = new Date(file.lastModified);
+    if(isNaN(d.getTime())) return null;
+    return d.toISOString().slice(0, 10);
+  }
+
+  function readFileAsRows(file){
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const rows = parseWorkbookRows(workbook);
+          const fileDate = extractDateFromFilename(file.name) || fallbackDateFromFile(file);
+          resolve({ file: file.name, rows, error: null, date: fileDate });
+        } catch(err){
+          resolve({ file: file.name, rows: [], error: err.message, date: null });
+        }
+      };
+      reader.onerror = () => resolve({ file: file.name, rows: [], error: 'Error de lectura del archivo', date: null });
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  async function handleFiles(fileListLike){
+    const allFiles = Array.from(fileListLike || []);
+    const files = allFiles.filter(isValidExcelFile);
+
+    if(!files.length){
+      showUploadMsg('✗ No se encontraron archivos .xlsx/.xls válidos en la selección.', false);
+      return;
+    }
+
+    showUploadMsg('Procesando ' + files.length + ' archivo(s)...', true);
+
+    const results = await Promise.all(files.map(readFileAsRows));
+    const okResults = results.filter(r => !r.error && r.rows.length);
+    const errResults = results.filter(r => r.error || !r.rows.length);
+
+    if(!okResults.length){
+      showUploadMsg('✗ No se pudo procesar ningún archivo. Detalle: ' + (errResults[0] ? errResults[0].error : 'formato no reconocido'), false);
+      return;
+    }
+
+    const consolidated = okResults.flatMap(r => r.rows.map(row => Object.assign({}, row, { _archivo: r.file, _fecha: row._fecha || r.date })));
+
+    dataState.rows = consolidated;
+    dataState.source = okResults.length === 1
+      ? 'Archivo cargado: ' + okResults[0].file
+      : okResults.length + ' archivos consolidados';
+    dataState.ts = new Date().toLocaleString('es-GT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    dataState.files = okResults.map(r => r.file);
+
+    state.cliente.clear(); state.cd.clear(); state.tipo.clear();
+    state.search = ''; document.getElementById('searchBox').value = '';
+    state.dateFrom = null; state.dateTo = null;
+
+    refreshFilterOptions();
+    render();
+    renderFilesSummary(dataState.files);
+
+    const undated = okResults.filter(r => !r.date).length;
+    let msg = '✓ ' + okResults.length + ' archivo(s) consolidados — ' + consolidated.length + ' filas totales.';
+    if(undated) msg += ' (' + undated + ' sin fecha reconocible)';
+    if(errResults.length){
+      msg += ' ' + errResults.length + ' archivo(s) con error (' + errResults.map(r => r.file).join(', ') + ').';
+    }
+    showUploadMsg(msg, errResults.length === 0);
+  }
+
+  function readEntryFilesRecursive(entry){
+    if(!entry) return Promise.resolve([]);
+    if(entry.isFile){
+      return new Promise((resolve) => entry.file(file => resolve([file]), () => resolve([])));
+    }
+    if(entry.isDirectory){
+      const reader = entry.createReader();
+      return new Promise((resolve) => {
+        let collected = [];
+        function readBatch(){
+          reader.readEntries((entries) => {
+            if(!entries.length){
+              Promise.all(collected.map(readEntryFilesRecursive)).then(arrays => resolve(arrays.flat()));
+            } else {
+              collected = collected.concat(entries);
+              readBatch();
+            }
+          }, () => resolve([]));
+        }
+        readBatch();
+      });
+    }
+    return Promise.resolve([]);
+  }
+
+  // ---------------- Compartir ----------------
+  const shareBtn = document.getElementById('shareBtn');
+  const shareToast = document.getElementById('shareToast');
+  let shareToastTimer = null;
+
+  function mostrarShareToast(texto, ok){
+    shareToast.textContent = texto;
+    shareToast.className = 'share-toast show' + (ok === false ? ' err' : '');
+    clearTimeout(shareToastTimer);
+    shareToastTimer = setTimeout(() => { shareToast.className = 'share-toast'; }, 2800);
+  }
+
+  async function copiarAlPortapapeles(texto){
+    if(navigator.clipboard && window.isSecureContext){
+      try{ await navigator.clipboard.writeText(texto); return true; }catch(err){ /* sigue al respaldo */ }
+    }
+    try{
+      const tmp = document.createElement('textarea');
+      tmp.value = texto;
+      tmp.style.position = 'fixed';
+      tmp.style.opacity = '0';
+      document.body.appendChild(tmp);
+      tmp.focus(); tmp.select();
+      const ok = document.execCommand('copy');
+      tmp.remove();
+      return ok;
+    }catch(err){
+      return false;
+    }
+  }
+
+  shareBtn.addEventListener('click', async () => {
+    const datosCompartir = {
+      title: document.title,
+      text: 'Dashboard de Ocupación de Posiciones · RANSA CD Villa Nueva',
+      url: window.location.href
+    };
+    try{
+      if(navigator.share){
+        await navigator.share(datosCompartir);
+        return;
+      }
+    }catch(err){
+      if(err && err.name === 'AbortError') return;
+    }
+    const copiado = await copiarAlPortapapeles(datosCompartir.url);
+    mostrarShareToast(copiado ? 'Enlace copiado al portapapeles' : 'No se pudo copiar el enlace', copiado);
+  });
+
+  // ---------------- Carga de archivos ----------------
+  const fileInput = document.getElementById('fileInput');
+
+  // Ya no se exige un nombre de carpeta específico: la primera vez que se
+  // presiona "Actualizar" se puede elegir cualquier carpeta (sin importar su
+  // ruta de OneDrive/SharePoint ni su nombre); esa carpeta queda enlazada de
+  // forma fija para las próximas actualizaciones.
+
+  fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if(!files.length){
+      showUploadMsg('✗ No se seleccionó ninguna carpeta con archivos.', false);
+      return;
+    }
+    handleFiles(files);
+  });
+
+  const supportsFSA = 'showDirectoryPicker' in window;
+
+  // Pequeño helper de IndexedDB para recordar el handle de carpeta autorizado
+  // (solo funciona en navegadores Chromium: Chrome, Edge). Una vez enlazada
+  // la carpeta correcta la primera vez, el botón "Actualizar" jamás vuelve a
+  // abrir el selector de carpetas: solo reutiliza ese mismo handle y confirma
+  // el permiso. No hay ninguna opción en la interfaz para cambiarlo — si el
+  // handle guardado deja de ser válido (carpeta movida/borrada) hay que
+  // borrar los datos del sitio en el navegador para volver a enlazarlo, y en
+  // ese momento se vuelve a validar el nombre de la carpeta.
+  const FOLDER_DB = 'ransaDashboardDB';
+  const FOLDER_STORE = 'handles';
+  const FOLDER_KEY = 'carpetaPosiciones';
+
+  function openFolderDB(){
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(FOLDER_DB, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(FOLDER_STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function guardarHandleCarpeta(handle){
+    const db = await openFolderDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(FOLDER_STORE, 'readwrite');
+      tx.objectStore(FOLDER_STORE).put(handle, FOLDER_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function leerHandleCarpeta(){
+    const db = await openFolderDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(FOLDER_STORE, 'readonly');
+      const req = tx.objectStore(FOLDER_STORE).get(FOLDER_KEY);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  }
+
+  async function asegurarPermiso(handle){
+    const opts = { mode: 'read' };
+    if((await handle.queryPermission(opts)) === 'granted') return true;
+    if((await handle.requestPermission(opts)) === 'granted') return true;
+    return false;
+  }
+
+  // Recorre recursivamente un FileSystemDirectoryHandle y devuelve todos los File.
+  async function recolectarArchivosDeCarpeta(dirHandle){
+    const archivos = [];
+    for await (const [, entry] of dirHandle.entries()){
+      if(entry.kind === 'file'){
+        try{ archivos.push(await entry.getFile()); }catch(err){ /* omitir archivo ilegible */ }
+      } else if(entry.kind === 'directory'){
+        archivos.push(...await recolectarArchivosDeCarpeta(entry));
+      }
+    }
+    return archivos;
+  }
+
+  function setUpdateBtnBusy(busy){
+    const btn = document.getElementById('updateBtn');
+    const icon = document.getElementById('updateBtnIcon');
+    btn.classList.toggle('busy', busy);
+    icon.classList.toggle('spin', busy);
+  }
+
+  async function actualizarDesdeCarpeta(){
+    if(!supportsFSA){
+      // Navegador sin soporte de File System Access API: usar selector clásico
+      // (el nombre de la carpeta elegida se valida en el evento 'change').
+      fileInput.click();
+      return;
+    }
+    setUpdateBtnBusy(true);
+    try{
+      let handle = await leerHandleCarpeta();
+      if(!handle){
+        // Primera vez en este navegador: pide elegir cualquier carpeta (no
+        // se valida el nombre) y la enlaza de forma permanente.
+        handle = await window.showDirectoryPicker({ mode: 'read' });
+        await guardarHandleCarpeta(handle);
+      }
+      const permitido = await asegurarPermiso(handle);
+      if(!permitido){
+        showUploadMsg('✗ No se concedió permiso para leer la carpeta.', false);
+        return;
+      }
+      const archivos = await recolectarArchivosDeCarpeta(handle);
+      if(!archivos.length){
+        showUploadMsg('✗ La carpeta configurada no tiene archivos.', false);
+        return;
+      }
+      handleFiles(archivos);
+    }catch(err){
+      if(err && err.name === 'AbortError') return; // el usuario cerró el selector
+      showUploadMsg('✗ No se pudo leer la carpeta: ' + err.message, false);
+    }finally{
+      setUpdateBtnBusy(false);
+    }
+  }
+
+  document.getElementById('updateBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    actualizarDesdeCarpeta();
+  });
+
+  const uploadPanel = document.getElementById('uploadPanel');
+  ['dragenter','dragover'].forEach(ev => uploadPanel.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation(); uploadPanel.classList.add('dragover');
+  }));
+  ['dragleave','drop'].forEach(ev => uploadPanel.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation(); uploadPanel.classList.remove('dragover');
+  }));
+  uploadPanel.addEventListener('drop', async (e) => {
+    // dataTransfer solo es válido de forma síncrona dentro del evento: se extrae
+    // aquí mismo antes de cualquier operación asíncrona.
+    const items = e.dataTransfer.items;
+    let entries = null;
+    if(items && items.length && items[0].webkitGetAsEntry){
+      entries = Array.from(items).map(it => it.webkitGetAsEntry()).filter(Boolean);
+    }
+    // Solo se acepta soltar una carpeta completa (no archivos sueltos); ya no
+    // se exige un nombre específico, puede ser cualquier carpeta.
+    const carpetaValida = entries && entries.length === 1 && entries[0].isDirectory;
+    if(!carpetaValida){
+      showUploadMsg('✗ Solo se acepta soltar una carpeta completa, no archivos sueltos.', false);
+      return;
+    }
+    const files = await readEntryFilesRecursive(entries[0]);
+    if(files.length) handleFiles(files);
+    else showUploadMsg('✗ La carpeta soltada no tiene archivos.', false);
+  });
+
+  // "Restablecer a cero": deja el dashboard completamente en 0, sin tocar
+  // ningún otro dato. Útil antes de publicar el archivo en tu dominio para
+  // que arranque limpio y se llene con la primera actualización real.
+  document.getElementById('resetDataBtn').addEventListener('click', () => {
+    dataState.rows = [];
+    dataState.source = 'Sin datos (restablecido a cero)';
+    dataState.ts = null;
+    dataState.files = null;
+    state.cliente.clear(); state.cd.clear(); state.tipo.clear();
+    state.search = ''; document.getElementById('searchBox').value = '';
+    state.dateFrom = null; state.dateTo = null;
+    refreshFilterOptions();
+    render();
+    renderFilesSummary([]);
+    showUploadMsg('Dashboard restablecido a cero.', true);
+  });
+
+  // ---------------- Init ----------------
+  refreshFilterOptions();
+  render();
+})();
+
+</script>
+</body>
+</html>
